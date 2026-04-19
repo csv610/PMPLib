@@ -5,56 +5,18 @@
 #include <pmp/io/io.h>
 #include <pmp/algorithms/decimation.h>
 
+#include <argparse/argparse.hpp>
+
 #include <iostream>
-#include <getopt.h>
 
 using namespace pmp;
 
-static struct option long_options[] = {
-    {"help", no_argument, 0, 'h'},
-    {"input", required_argument, 0, 'i'},
-    {"output", required_argument, 0, 'o'},
-    {"vertices", required_argument, 0, 'n'},
-    {"aspect-ratio", required_argument, 0, 'a'},
-    {"edge-length", required_argument, 0, 'e'},
-    {"max-valence", required_argument, 0, 'm'},
-    {"normal-deviation", required_argument, 0, 'd'},
-    {"hausdorff", required_argument, 0, 'H'},
-    {0, 0, 0, 0}
-};
-
-void usage_and_exit()
-{
-    std::cerr << "Usage: meshsimplify [options] --input <input> --output <output>\n\n"
-              << "Simplify a mesh using quadric-based decimation.\n\n"
-              << "Options:\n"
-              << "  -h, --help              show this help message\n"
-              << "  -i, --input <file>      input mesh file (required)\n"
-              << "  -o, --output <file>     output mesh file (required)\n"
-              << "  -n, --vertices <num>    target number of vertices (required)\n"
-              << "  -a, --aspect-ratio <r>  min aspect ratio [0-1] (default: 0)\n"
-              << "  -e, --edge-length <l>   min edge length (default: 0)\n"
-              << "  -m, --max-valence <v>  max vertex valence (default: 0)\n"
-              << "  -d, --normal-deviation <deg>  max normal deviation in degrees (default: 0)\n"
-              << "  -H, --hausdorff <err>    max Hausdorff error (default: 0)\n"
-              << "\n"
-              << "Constraints:\n"
-              << "  --aspect-ratio: minimum triangle aspect ratio (higher = more regular)\n"
-              << "  --edge-length: minimum edge length to preserve details\n"
-              << "  --max-valence: maximum vertex valence (default: unlimited)\n"
-              << "  --normal-deviation: preserves sharp features\n"
-              << "  --hausdorff: limits deviation from original surface\n"
-              << "\n"
-              << "Example:\n"
-              << "  meshsimplify --input input.off --output output.off --vertices 1000\n"
-              << "  meshsimplify -i input.off -o output.off -n 500 -a 0.5 -d 30\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    const char* input = nullptr;
-    const char* output = nullptr;
+    argparse::ArgumentParser program("meshsimplify", "1.0", argparse::default_arguments::help);
+
+    std::string input_file;
+    std::string output_file;
     unsigned int n_vertices = 0;
     Scalar aspect_ratio = 0.0;
     Scalar edge_length = 0.0;
@@ -62,62 +24,77 @@ int main(int argc, char** argv)
     Scalar normal_deviation = 0.0;
     Scalar hausdorff_error = 0.0;
 
-    int opt;
-    int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "hi:o:n:a:e:m:d:H:", long_options, &option_index)) != -1)
+    program.add_argument("-i", "--input")
+        .help("Input mesh file")
+        .required();
+
+    program.add_argument("-o", "--output")
+        .help("Output mesh file")
+        .required();
+
+    program.add_argument("-n", "--vertices")
+        .help("Target number of vertices")
+        .required()
+        .scan<'i', unsigned int>();
+
+    program.add_argument("-a", "--aspect-ratio")
+        .help("Minimum aspect ratio [0-1]")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-e", "--edge-length")
+        .help("Minimum edge length")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-m", "--max-valence")
+        .help("Maximum vertex valence")
+        .default_value(0)
+        .scan<'i', unsigned int>();
+
+    program.add_argument("-d", "--normal-deviation")
+        .help("Maximum normal deviation (degrees)")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-H", "--hausdorff")
+        .help("Maximum Hausdorff error")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    try
     {
-        switch (opt)
-        {
-            case 'h':
-                usage_and_exit();
-                break;
-            case 'i':
-                input = optarg;
-                break;
-            case 'o':
-                output = optarg;
-                break;
-            case 'n':
-                n_vertices = std::stoul(optarg);
-                break;
-            case 'a':
-                aspect_ratio = std::stod(optarg);
-                break;
-            case 'e':
-                edge_length = std::stod(optarg);
-                break;
-            case 'm':
-                max_valence = std::stoul(optarg);
-                break;
-            case 'd':
-                normal_deviation = std::stod(optarg);
-                break;
-            case 'H':
-                hausdorff_error = std::stod(optarg);
-                break;
-            default:
-                usage_and_exit();
-        }
+        program.parse_args(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
     }
 
-    if (!input || !output || n_vertices == 0)
-    {
-        usage_and_exit();
-    }
+    input_file = program.get<std::string>("--input");
+    output_file = program.get<std::string>("--output");
+    n_vertices = program.get<unsigned int>("--vertices");
+    aspect_ratio = program.get<Scalar>("--aspect-ratio");
+    edge_length = program.get<Scalar>("--edge-length");
+    max_valence = program.get<unsigned int>("--max-valence");
+    normal_deviation = program.get<Scalar>("--normal-deviation");
+    hausdorff_error = program.get<Scalar>("--hausdorff");
 
     SurfaceMesh mesh;
     try
     {
-        read(mesh, input);
+        read(mesh, input_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to read mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
     unsigned int orig_verts = mesh.n_vertices();
-    std::cout << "Input: " << input << "\n";
+    std::cout << "Input: " << input_file << "\n";
     std::cout << "Vertices: " << orig_verts << "\n";
     std::cout << "Target: " << n_vertices << "\n";
 
@@ -129,7 +106,7 @@ int main(int argc, char** argv)
     catch (const std::exception& e)
     {
         std::cerr << "Decimation failed: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
     unsigned int new_verts = mesh.n_vertices();
@@ -138,14 +115,14 @@ int main(int argc, char** argv)
 
     try
     {
-        write(mesh, output);
+        write(mesh, output_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to write mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Saved to: " << output << std::endl;
+    std::cout << "Saved to: " << output_file << std::endl;
     return 0;
 }

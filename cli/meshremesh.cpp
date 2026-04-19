@@ -5,63 +5,18 @@
 #include <pmp/io/io.h>
 #include <pmp/algorithms/remeshing.h>
 
+#include <argparse/argparse.hpp>
+
 #include <iostream>
-#include <getopt.h>
 
 using namespace pmp;
 
-static struct option long_options[] = {
-    {"help", no_argument, 0, 'h'},
-    {"input", required_argument, 0, 'i'},
-    {"output", required_argument, 0, 'o'},
-    {"mode", required_argument, 0, 'm'},
-    {"length", required_argument, 0, 'l'},
-    {"min-length", required_argument, 0, 'n'},
-    {"max-length", required_argument, 0, 'x'},
-    {"error", required_argument, 0, 'e'},
-    {"iterations", required_argument, 0, 'r'},
-    {"no-projection", no_argument, 0, 'p'},
-    {"binary", no_argument, 0, 'b'},
-    {0, 0, 0, 0}
-};
-
-void usage_and_exit()
-{
-    std::cerr << "Usage: meshremesh [options] --input <input> --output <output>\n\n"
-              << "Remesh a polygonal mesh with improved triangle quality.\n\n"
-              << "Options:\n"
-              << "  -h, --help              show this help message\n"
-              << "  -i, --input <file>      input mesh file (required)\n"
-              << "  -o, --output <file>    output mesh file (required)\n"
-              << "  -m, --mode <mode>      remeshing mode:\n"
-              << "                           uniform  - uniform edge length\n"
-              << "                           adaptive - adaptive edge lengths (default)\n"
-              << "  -l, --length <len>     target edge length for uniform\n"
-              << "  -n, --min-length <l>  min edge length for adaptive\n"
-              << "  -x, --max-length <l>  max edge length for adaptive\n"
-              << "  -e, --error <err>      approximation error for adaptive\n"
-              << "  -r, --iterations <n>   number of iterations (default: 10)\n"
-              << "  -p, --no-projection    disable projection to original surface\n"
-              << "  -b, --binary         write binary format\n"
-              << "\n"
-              << "Uniform remeshing:\n"
-              << "  --length: target edge length\n"
-              << "\n"
-              << "Adaptive remeshing:\n"
-              << "  --min-length: preserve detail (small edges)\n"
-              << "  --max-length: smooth areas (large edges)\n"
-              << "  --error: approximation error limit\n"
-              << "\n"
-              << "Example:\n"
-              << "  meshremesh --input input.off --output output.off --mode uniform --length 0.01\n"
-              << "  meshremesh -i input.off -o output.off -m adaptive -n 0.005 -x 0.02 -e 0.001\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    const char* input = nullptr;
-    const char* output = nullptr;
+    argparse::ArgumentParser program("meshremesh", "1.0", argparse::default_arguments::help);
+
+    std::string input_file;
+    std::string output_file;
     std::string mode = "adaptive";
     Scalar edge_length = 0.0;
     Scalar min_edge_length = 0.0;
@@ -71,79 +26,99 @@ int main(int argc, char** argv)
     bool use_projection = true;
     bool binary = false;
 
-    int opt;
-    int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "hi:o:m:l:n:x:e:r:pb", long_options, &option_index)) != -1)
+    program.add_argument("-i", "--input")
+        .help("Input mesh file")
+        .required();
+
+    program.add_argument("-o", "--output")
+        .help("Output mesh file")
+        .required();
+
+    program.add_argument("-m", "--mode")
+        .help("Mode: uniform, adaptive")
+        .default_value("adaptive");
+
+    program.add_argument("-l", "--length")
+        .help("Target edge length for uniform")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-n", "--min-length")
+        .help("Min edge length for adaptive")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-x", "--max-length")
+        .help("Max edge length for adaptive")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-e", "--error")
+        .help("Approximation error for adaptive")
+        .default_value(0.0)
+        .scan<'g', Scalar>();
+
+    program.add_argument("-r", "--iterations")
+        .help("Number of iterations")
+        .default_value(10)
+        .scan<'i', unsigned int>();
+
+    program.add_argument("-p", "--no-projection")
+        .help("Disable projection to original")
+        .default_value(false)
+        .implicit_value(true);
+
+    program.add_argument("-b", "--binary")
+        .help("Write binary format")
+        .default_value(false)
+        .implicit_value(true);
+
+    try
     {
-        switch (opt)
-        {
-            case 'h':
-                usage_and_exit();
-                break;
-            case 'i':
-                input = optarg;
-                break;
-            case 'o':
-                output = optarg;
-                break;
-            case 'm':
-                mode = optarg;
-                break;
-            case 'l':
-                edge_length = std::stod(optarg);
-                break;
-            case 'n':
-                min_edge_length = std::stod(optarg);
-                break;
-            case 'x':
-                max_edge_length = std::stod(optarg);
-                break;
-            case 'e':
-                approx_error = std::stod(optarg);
-                break;
-            case 'r':
-                iterations = std::stoul(optarg);
-                break;
-            case 'p':
-                use_projection = false;
-                break;
-            case 'b':
-                binary = true;
-                break;
-            default:
-                usage_and_exit();
-        }
+        program.parse_args(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
     }
 
-    if (!input || !output)
-    {
-        usage_and_exit();
-    }
+    input_file = program.get<std::string>("--input");
+    output_file = program.get<std::string>("--output");
+    mode = program.get<std::string>("--mode");
+    edge_length = program.get<Scalar>("--length");
+    min_edge_length = program.get<Scalar>("--min-length");
+    max_edge_length = program.get<Scalar>("--max-length");
+    approx_error = program.get<Scalar>("--error");
+    iterations = program.get<unsigned int>("--iterations");
+    use_projection = !program.get<bool>("--no-projection");
+    binary = program.get<bool>("--binary");
 
     if (mode == "uniform" && edge_length <= 0.0)
     {
         std::cerr << "Error: --length required for uniform remeshing\n";
-        exit(1);
+        return 1;
     }
 
     if (mode == "adaptive" && (min_edge_length <= 0.0 || max_edge_length <= 0.0))
     {
         std::cerr << "Error: --min-length and --max-length required for adaptive\n";
-        exit(1);
+        return 1;
     }
 
     SurfaceMesh mesh;
     try
     {
-        read(mesh, input);
+        read(mesh, input_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to read mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Input: " << input << "\n";
+    std::cout << "Input: " << input_file << "\n";
     std::cout << "Vertices: " << mesh.n_vertices() << "\n";
     std::cout << "Mode: " << mode << ", iterations: " << iterations << "\n";
 
@@ -156,22 +131,20 @@ int main(int argc, char** argv)
         }
         else if (mode == "adaptive")
         {
-            std::cout << "Min edge: " << min_edge_length
-                    << ", Max edge: " << max_edge_length
-                    << ", Approx error: " << approx_error << "\n";
-            adaptive_remeshing(mesh, min_edge_length, max_edge_length,
-                            approx_error, iterations, use_projection);
+            std::cout << "Min edge: " << min_edge_length << ", Max edge: " << max_edge_length
+                      << ", Approx error: " << approx_error << "\n";
+            adaptive_remeshing(mesh, min_edge_length, max_edge_length, approx_error, iterations, use_projection);
         }
         else
         {
             std::cerr << "Unknown mode: " << mode << "\n";
-            exit(1);
+            return 1;
         }
     }
     catch (const std::exception& e)
     {
         std::cerr << "Remeshing failed: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
     std::cout << "Output vertices: " << mesh.n_vertices() << "\n";
@@ -181,14 +154,14 @@ int main(int argc, char** argv)
     {
         IOFlags flags;
         flags.use_binary = binary;
-        write(mesh, output, flags);
+        write(mesh, output_file, flags);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to write mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Saved to: " << output << std::endl;
+    std::cout << "Saved to: " << output_file << std::endl;
     return 0;
 }

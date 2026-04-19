@@ -7,6 +7,14 @@ project(
   HOMEPAGE_URL "https://www.pmp-library.org")
 cmake_policy(SET CMP0072 NEW)
 
+include(FetchContent)
+
+FetchContent_Declare(
+  argparse
+  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+  GIT_TAG v2.9)
+FetchContent_MakeAvailable(argparse)
+
 option(PMP_BUILD_EXAMPLES "Build the PMP examples" ON)
 option(PMP_BUILD_CLI "Build the PMP CLI tools" ON)
 option(PMP_BUILD_TESTS "Build the PMP test programs" OFF)

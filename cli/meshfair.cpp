@@ -5,100 +5,66 @@
 #include <pmp/io/io.h>
 #include <pmp/algorithms/fairing.h>
 
+#include <argparse/argparse.hpp>
+
 #include <iostream>
-#include <getopt.h>
 
 using namespace pmp;
 
-static struct option long_options[] = {
-    {"help", no_argument, 0, 'h'},
-    {"input", required_argument, 0, 'i'},
-    {"output", required_argument, 0, 'o'},
-    {"method", required_argument, 0, 'm'},
-    {"order", required_argument, 0, 'k'},
-    {0, 0, 0, 0}
-};
-
-void usage_and_exit()
-{
-    std::cerr << "Usage: meshfair [options] --input <input> --output <output>\n\n"
-              << "Fair (smooth) a mesh by minimizing curvature or area.\n\n"
-              << "Options:\n"
-              << "  -h, --help            show this help message\n"
-              << "  -i, --input <file>    input mesh file (required)\n"
-              << "  -o, --output <file>   output mesh file (required)\n"
-              << "  -m, --method <m>     fairing method:\n"
-              << "                         area - minimize surface area\n"
-              << "                         curv - minimize curvature (default)\n"
-              << "                         fair - implicit fairing (k-harmonic)\n"
-              << "  -k, --order <order>  order for implicit fairing (2-4, default: 2)\n"
-              << "\n"
-              << "Fairing methods:\n"
-              << "  area:  Minimizes total surface area\n"
-              << "  curv:  Minimizes surface curvature\n"
-              << "  fair:  Solves k-harmonic equation\n"
-              << "\n"
-              << "Implicit fairing (--method fair):\n"
-              << "  --order 2: biharmonic (default)\n"
-              << "  --order 3: triharmonic\n"
-              << "  --order 4: quadharmonic\n"
-              << "\n"
-              << "Example:\n"
-              << "  meshfair --input input.off --output output.off --method curv\n"
-              << "  meshfair -i input.off -o output.off -m fair -k 3\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
-    const char* input = nullptr;
-    const char* output = nullptr;
+    argparse::ArgumentParser program("meshfair", "1.0", argparse::default_arguments::help);
+
+    std::string input_file;
+    std::string output_file;
     std::string method = "curv";
     unsigned int order = 2;
 
-    int opt;
-    int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "hi:o:m:k:", long_options, &option_index)) != -1)
+    program.add_argument("-i", "--input")
+        .help("Input mesh file")
+        .required();
+
+    program.add_argument("-o", "--output")
+        .help("Output mesh file")
+        .required();
+
+    program.add_argument("-m", "--method")
+        .help("Fairing method: area, curv, fair")
+        .default_value("curv");
+
+    program.add_argument("-k", "--order")
+        .help("Order for implicit fairing (2-4)")
+        .default_value(2)
+        .scan<'i', unsigned int>();
+
+    try
     {
-        switch (opt)
-        {
-            case 'h':
-                usage_and_exit();
-                break;
-            case 'i':
-                input = optarg;
-                break;
-            case 'o':
-                output = optarg;
-                break;
-            case 'm':
-                method = optarg;
-                break;
-            case 'k':
-                order = std::stoul(optarg);
-                break;
-            default:
-                usage_and_exit();
-        }
+        program.parse_args(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
     }
 
-    if (!input || !output)
-    {
-        usage_and_exit();
-    }
+    input_file = program.get<std::string>("--input");
+    output_file = program.get<std::string>("--output");
+    method = program.get<std::string>("--method");
+    order = program.get<unsigned int>("--order");
 
     SurfaceMesh mesh;
     try
     {
-        read(mesh, input);
+        read(mesh, input_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to read mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Input: " << input << "\n";
+    std::cout << "Input: " << input_file << "\n";
     std::cout << "Vertices: " << mesh.n_vertices() << "\n";
     std::cout << "Method: " << method << "\n";
 
@@ -122,27 +88,27 @@ int main(int argc, char** argv)
         else
         {
             std::cerr << "Unknown method: " << method << "\n";
-            exit(1);
+            return 1;
         }
     }
     catch (const std::exception& e)
     {
         std::cerr << "Fairing failed: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
     std::cout << "Output vertices: " << mesh.n_vertices() << std::endl;
 
     try
     {
-        write(mesh, output);
+        write(mesh, output_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to write mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Saved to: " << output << std::endl;
+    std::cout << "Saved to: " << output_file << std::endl;
     return 0;
 }

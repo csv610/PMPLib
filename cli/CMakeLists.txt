@@ -1,26 +1,22 @@
-add_executable(meshinfo meshinfo.cpp)
-target_link_libraries(meshinfo pmp)
+set(CMAKE_DISABLE_DEPRECATED_WARNINGS "-Wno-deprecated-declarations")
 
-add_executable(meshfilter meshfilter.cpp)
-target_link_libraries(meshfilter pmp)
+find_program(ARGPARSE_EXECUTABLE argparse)
 
-add_executable(meshsimplify meshsimplify.cpp)
-target_link_libraries(meshsimplify pmp)
+function(add_cli_tool NAME)
+    add_executable(${NAME} ${NAME}.cpp)
+    target_link_libraries(${NAME} pmp)
+    target_include_directories(${NAME} PRIVATE ${argparse_SOURCE_DIR}/include)
+    set_source_files_properties(${NAME}.cpp PROPERTIES COMPILE_FLAGS "${CMAKE_DISABLE_DEPRECATED_WARNINGS}")
+endfunction()
 
-add_executable(meshsubdivide meshsubdivide.cpp)
-target_link_libraries(meshsubdivide pmp)
-
-add_executable(meshfill meshfill.cpp)
-target_link_libraries(meshfill pmp)
-
-add_executable(meshfair meshfair.cpp)
-target_link_libraries(meshfair pmp)
-
-add_executable(meshparam meshparam.cpp)
-target_link_libraries(meshparam pmp)
-
-add_executable(meshremesh meshremesh.cpp)
-target_link_libraries(meshremesh pmp)
+add_cli_tool(meshinfo)
+add_cli_tool(meshfilter)
+add_cli_tool(meshsimplify)
+add_cli_tool(meshsubdivide)
+add_cli_tool(meshfill)
+add_cli_tool(meshfair)
+add_cli_tool(meshparam)
+add_cli_tool(meshremesh)
 
 add_custom_target(cli)
 add_dependencies(cli meshinfo meshfilter meshsimplify meshsubdivide meshfill meshfair meshparam meshremesh)

@@ -9,85 +9,62 @@
 #include <pmp/algorithms/utilities.h>
 #include <pmp/algorithms/differential_geometry.h>
 
+#include <argparse/argparse.hpp>
+
 #include <iostream>
 #include <iomanip>
-#include <getopt.h>
 
 using namespace pmp;
 
-static struct option long_options[] = {
-    {"help", no_argument, 0, 'h'},
-    {"curvature", no_argument, 0, 'c'},
-    {"features", no_argument, 0, 'f'},
-    {0, 0, 0, 0}
-};
-
-void usage_and_exit()
-{
-    std::cerr << "Usage: meshinfo [options] <input>\n\n"
-              << "Display information about a polygonal mesh.\n\n"
-              << "Options:\n"
-              << "  -h, --help          show this help message\n"
-              << "  -c, --curvature    compute and display curvature information\n"
-              << "  -f, --features    compute and display feature edge information\n"
-              << "\n"
-              << "Mesh information displayed:\n"
-              << "  - number of vertices, faces, edges, halfedges\n"
-              << "  - bounding box (min/max coordinates)\n"
-              << "  - surface area\n"
-              << "  - average edge length\n"
-              << "  - (with --curvature) mean curvature statistics (min/max/avg)\n"
-              << "  - (with --features) number of feature edges at 30 degree angle\n"
-              << "\n"
-              << "Example:\n"
-              << "  meshinfo --curvature --features input.off\n";
-    exit(1);
-}
-
 int main(int argc, char** argv)
 {
+    argparse::ArgumentParser program("meshinfo", "1.0", argparse::default_arguments::help);
+
     bool compute_curvature = false;
     bool compute_features = false;
+    std::string input_file;
 
-    int opt;
-    int option_index = 0;
-    while ((opt = getopt_long(argc, argv, "hcf", long_options, &option_index)) != -1)
+    program.add_argument("-c", "--curvature")
+        .help("Compute and display curvature information")
+        .default_value(false)
+        .implicit_value(true);
+
+    program.add_argument("-f", "--features")
+        .help("Compute and display feature edge information")
+        .default_value(false)
+        .implicit_value(true);
+
+    program.add_argument("input")
+        .help("Input mesh file")
+        .required();
+
+    try
     {
-        switch (opt)
-        {
-            case 'h':
-                usage_and_exit();
-                break;
-            case 'c':
-                compute_curvature = true;
-                break;
-            case 'f':
-                compute_features = true;
-                break;
-            default:
-                usage_and_exit();
-        }
+        program.parse_args(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << err.what() << std::endl;
+        std::cerr << program;
+        return 1;
     }
 
-    if (argc - optind < 1)
-    {
-        usage_and_exit();
-    }
-
-    const char* input = argv[optind];
+    input_file = program.get<std::string>("input");
+    compute_curvature = program.get<bool>("--curvature");
+    compute_features = program.get<bool>("--features");
 
     SurfaceMesh mesh;
     try
     {
-        read(mesh, input);
+        read(mesh, input_file);
     }
     catch (const IOException& e)
     {
         std::cerr << "Failed to read mesh: " << e.what() << std::endl;
-        exit(1);
+        return 1;
     }
 
-    std::cout << "Mesh: " << input << "\n\n";
+    std::cout << "Mesh: " << input_file << "\n\n";
     std::cout << "  Vertices:       " << mesh.n_vertices() << "\n";
     std::cout << "  Faces:         " << mesh.n_faces() << "\n";
     std::cout << "  Edges:         " << mesh.n_edges() << "\n";
@@ -110,8 +87,7 @@ int main(int argc, char** argv)
         auto p2 = mesh.position(v2);
         area += triangle_area(p0, p1, p2);
     }
-    std::cout << "\nSurface Area: " << std::fixed << std::setprecision(6)
-              << area << "\n";
+    std::cout << "\nSurface Area: " << std::fixed << std::setprecision(6) << area << "\n";
 
     if (mesh.n_vertices() > 0)
     {
