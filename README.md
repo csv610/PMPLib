@@ -10,6 +10,7 @@ PMPLib is a modern C++ library for processing polygon surface meshes. This is a 
 - **Efficient mesh data structure** - Half-edge data structure for polygon meshes
 - **Comprehensive algorithms** - Decimation, remeshing, subdivision, smoothing, hole filling, fairing, parameterization
 - **CLI tools** - 8 command-line applications for batch processing
+- **Python bindings** - Fast, NumPy-integrated bindings via [nanobind](https://github.com/wjakob/nanobind)
 - **Cross-platform** - Windows, macOS, Linux
 - **Header-only optional** - Can be used as header-only library
 
@@ -62,6 +63,45 @@ make
 
 # Remesh
 ./meshremesh -i input.off -o output.off -m uniform -l 0.01
+```
+
+## Python Bindings
+
+PMPLib provides high-performance Python bindings powered by [nanobind](https://github.com/wjakob/nanobind).
+
+### Features
+- **Fast and Lightweight** - Minimal overhead using nanobind
+- **NumPy Integration** - Direct access to vertex positions as NumPy arrays via `positions()` (zero-copy)
+- **Modern Python** - Supports Python 3.12 and 3.13+
+- **Comprehensive API** - Access to `SurfaceMesh` and all core algorithms
+
+### Installation
+
+```sh
+mkdir build && cd build
+cmake .. -DPMP_BUILD_PYTHON=ON
+make
+```
+
+### Usage Example
+
+```python
+import pmplib
+
+# Create mesh and read from file
+mesh = pmplib.SurfaceMesh()
+mesh.read("input.obj")
+
+# Access vertex positions as NumPy array
+pts = mesh.positions()
+print(f"Number of vertices: {mesh.n_vertices()}")
+
+# Apply algorithms
+pmplib.explicit_smoothing(mesh, 10)
+pmplib.catmull_clark_subdivision(mesh)
+
+# Write back to file
+mesh.write("output.obj")
 ```
 
 ## Comparison with Other Libraries
