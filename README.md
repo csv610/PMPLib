@@ -137,6 +137,10 @@ PMPLib is provided under the [MIT License](LICENSE.txt), same as the original pm
 
 This library is based on the [pmp-library](https://github.com/pmp-library/pmp-library) by Daniel Sieger and Mario Botsch. PMPLib adds CLI tools for command-line usage while maintaining compatibility with the original library.
 
+## Contributing
+
+CLI tools in this port were added by [csv610](https://github.com/csv610). Contributions are welcome - please submit pull requests or open issues for bugs and feature requests.
+
 ## Citation
 
 If you use this library, please cite the original pmp-library:
