@@ -7,6 +7,7 @@ name = "pmplib"
 version = "0.0.1"
 description = "PMPLib - Polygon Mesh Processing Library Python bindings"
 readme = "README.md"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "PMPLib Developers", email = "pmp-library@googlegroups.com"}
@@ -14,10 +15,12 @@ authors = [
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]
 Homepage = "https://www.pmp-library.org"
 
 [tool.scikit-build-core.wheel]
-py-api = "cp312"
+py-api = "cp313"

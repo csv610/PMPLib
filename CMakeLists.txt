@@ -222,7 +222,7 @@ if(PMP_BUILD_CLI)
 endif()
 
 if(PMP_BUILD_PYTHON)
-  add_subdirectory(src/pybind11)
+  add_subdirectory(src/python)
 endif()
 
 if(PMP_BUILD_TESTS)

@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: MIT
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/vector.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/ndarray.h>
 #include <pmp/surface_mesh.h>
 #include <pmp/io/io.h>
 #include <pmp/algorithms/decimation.h>
@@ -24,6 +27,30 @@ NB_MODULE(pmplib, m)
 {
     m.doc() = "PMPLib - Polygon Mesh Processing Library";
 
+    nb::class_<Vertex>(m, "Vertex")
+        .def(nb::init<uint32_t>(), nb::arg("idx") = 0xffffffffu)
+        .def("idx", &Vertex::idx)
+        .def("is_valid", &Vertex::is_valid)
+        .def("__repr__", [](Vertex v) { return "Vertex(" + std::to_string(v.idx()) + ")"; });
+
+    nb::class_<Halfedge>(m, "Halfedge")
+        .def(nb::init<uint32_t>(), nb::arg("idx") = 0xffffffffu)
+        .def("idx", &Halfedge::idx)
+        .def("is_valid", &Halfedge::is_valid)
+        .def("__repr__", [](Halfedge h) { return "Halfedge(" + std::to_string(h.idx()) + ")"; });
+
+    nb::class_<Edge>(m, "Edge")
+        .def(nb::init<uint32_t>(), nb::arg("idx") = 0xffffffffu)
+        .def("idx", &Edge::idx)
+        .def("is_valid", &Edge::is_valid)
+        .def("__repr__", [](Edge e) { return "Edge(" + std::to_string(e.idx()) + ")"; });
+
+    nb::class_<Face>(m, "Face")
+        .def(nb::init<uint32_t>(), nb::arg("idx") = 0xffffffffu)
+        .def("idx", &Face::idx)
+        .def("is_valid", &Face::is_valid)
+        .def("__repr__", [](Face f) { return "Face(" + std::to_string(f.idx()) + ")"; });
+
     nb::class_<SurfaceMesh>(m, "SurfaceMesh")
         .def(nb::init<>())
         .def("n_vertices", &SurfaceMesh::n_vertices, "Returns the number of vertices")
@@ -34,7 +61,41 @@ NB_MODULE(pmplib, m)
         }, "Read mesh from file")
         .def("write", [](const SurfaceMesh& mesh, const std::string& filename) {
             write(mesh, filename);
-        }, "Write mesh to file");
+        }, "Write mesh to file")
+        .def("clear", &SurfaceMesh::clear)
+        .def("garbage_collection", &SurfaceMesh::garbage_collection)
+        .def("add_vertex", &SurfaceMesh::add_vertex, "Add vertex with position")
+        .def("add_face", [](SurfaceMesh& mesh, const std::vector<Vertex>& vertices) {
+            return mesh.add_face(vertices);
+        }, "Add face with vertex list")
+        .def("position", [](SurfaceMesh& mesh, Vertex v) {
+            Point p = mesh.position(v);
+            return std::vector<Scalar>{p[0], p[1], p[2]};
+        })
+        .def("set_position", [](SurfaceMesh& mesh, Vertex v, const std::vector<Scalar>& p) {
+            if (p.size() != 3) throw std::runtime_error("Point must have 3 components");
+            mesh.position(v) = Point(p[0], p[1], p[2]);
+        })
+        .def("positions", [](SurfaceMesh& mesh) {
+            auto vpoint = mesh.get_vertex_property<Point>("v:point");
+            return nb::ndarray<nb::numpy, Scalar, nb::shape<-1, 3>>(
+                vpoint.data(),
+                {mesh.vertices_size(), 3},
+                nb::handle() 
+            );
+        }, nb::rv_policy::reference_internal)
+        .def("faces", [](SurfaceMesh& mesh) {
+            std::vector<std::vector<uint32_t>> f;
+            f.reserve(mesh.n_faces());
+            for (auto face : mesh.faces()) {
+                std::vector<uint32_t> verts;
+                for (auto v : mesh.vertices(face)) {
+                    verts.push_back(v.idx());
+                }
+                f.push_back(verts);
+            }
+            return f;
+        });
 
     m.def("decimate", [](SurfaceMesh& mesh, unsigned int n_vertices,
                        Scalar aspect_ratio = 0.0, Scalar edge_length = 0.0,
