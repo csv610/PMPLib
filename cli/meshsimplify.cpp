@@ -10,30 +10,43 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"input", required_argument, 0, 'i'},
+    {"output", required_argument, 0, 'o'},
+    {"vertices", required_argument, 0, 'n'},
+    {"aspect-ratio", required_argument, 0, 'a'},
+    {"edge-length", required_argument, 0, 'e'},
+    {"max-valence", required_argument, 0, 'm'},
+    {"normal-deviation", required_argument, 0, 'd'},
+    {"hausdorff", required_argument, 0, 'H'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
-    std::cerr << "Usage: meshsimplify [options] -i <input> -o <output>\n\n"
+    std::cerr << "Usage: meshsimplify [options] --input <input> --output <output>\n\n"
               << "Simplify a mesh using quadric-based decimation.\n\n"
               << "Options:\n"
-              << "  -h            show this help message\n"
-              << "  -i <file>     input mesh file (required)\n"
-              << "  -o <file>    output mesh file (required)\n"
-              << "  -n <num>     target number of vertices (required)\n"
-              << "  -a <ratio>  min aspect ratio of triangles [0-1] (default: 0)\n"
-              << "  -e <len>    min edge length (default: 0)\n"
-              << "  -m <val>    max vertex valence (default: 0)\n"
-              << "  -d <deg>    max normal deviation in degrees (default: 0)\n"
-              << "  -H <err>    max Hausdorff approximation error (default: 0)\n"
+              << "  -h, --help              show this help message\n"
+              << "  -i, --input <file>      input mesh file (required)\n"
+              << "  -o, --output <file>     output mesh file (required)\n"
+              << "  -n, --vertices <num>    target number of vertices (required)\n"
+              << "  -a, --aspect-ratio <r>  min aspect ratio [0-1] (default: 0)\n"
+              << "  -e, --edge-length <l>   min edge length (default: 0)\n"
+              << "  -m, --max-valence <v>  max vertex valence (default: 0)\n"
+              << "  -d, --normal-deviation <deg>  max normal deviation in degrees (default: 0)\n"
+              << "  -H, --hausdorff <err>    max Hausdorff error (default: 0)\n"
               << "\n"
-              << "Constraints (use to control quality):\n"
-              << "  -a: minimum triangle aspect ratio (higher = more regular triangles)\n"
-              << "  -e: minimum edge length to preserve details\n"
-              << "  -m: maximum vertex valence (default: unlimited)\n"
-              << "  -d: normal deviation preserves sharp features\n"
-              << "  -H: limits deviation from original surface\n"
+              << "Constraints:\n"
+              << "  --aspect-ratio: minimum triangle aspect ratio (higher = more regular)\n"
+              << "  --edge-length: minimum edge length to preserve details\n"
+              << "  --max-valence: maximum vertex valence (default: unlimited)\n"
+              << "  --normal-deviation: preserves sharp features\n"
+              << "  --hausdorff: limits deviation from original surface\n"
               << "\n"
               << "Example:\n"
-              << "  meshsimplify -i input.off -o output.off -n 1000\n"
+              << "  meshsimplify --input input.off --output output.off --vertices 1000\n"
               << "  meshsimplify -i input.off -o output.off -n 500 -a 0.5 -d 30\n";
     exit(1);
 }
@@ -49,10 +62,11 @@ int main(int argc, char** argv)
     Scalar normal_deviation = 0.0;
     Scalar hausdorff_error = 0.0;
 
-    int c;
-    while ((c = getopt(argc, argv, "hi:o:n:a:e:m:d:H:")) != -1)
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hi:o:n:a:e:m:d:H:", long_options, &option_index)) != -1)
     {
-        switch (c)
+        switch (opt)
         {
             case 'h':
                 usage_and_exit();

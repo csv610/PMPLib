@@ -10,32 +10,42 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"input", required_argument, 0, 'i'},
+    {"output", required_argument, 0, 'o'},
+    {"iterations", required_argument, 0, 'n'},
+    {"method", required_argument, 0, 'm'},
+    {"boundary", required_argument, 0, 'b'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
-    std::cerr << "Usage: meshsubdivide [options] -i <input> -o <output>\n\n"
+    std::cerr << "Usage: meshsubdivide [options] --input <input> --output <output>\n\n"
               << "Subdivide a polygonal mesh to create a smoother surface.\n\n"
               << "Options:\n"
-              << "  -h            show this help message\n"
-              << "  -i <file>     input mesh file (required)\n"
-              << "  -o <file>    output mesh file (required)\n"
-              << "  -n <iter>    number of subdivision iterations (default: 1)\n"
-              << "  -m <method>  subdivision method:\n"
-              << "                 cc     - Catmull-Clark (default, for quad/ngon meshes)\n"
-              << "                 loop   - Loop (for triangle meshes only)\n"
-              << "                 qt     - quad-tri subdivision\n"
-              << "                 linear - linear quad-tri subdivision\n"
-              << "  -b <mode>   boundary handling:\n"
-              << "                 i - interpolate boundary (default)\n"
-              << "                 p - preserve boundary positions\n"
+              << "  -h, --help              show this help message\n"
+              << "  -i, --input <file>       input mesh file (required)\n"
+              << "  -o, --output <file>      output mesh file (required)\n"
+              << "  -n, --iterations <num>  number of iterations (default: 1)\n"
+              << "  -m, --method <m>       subdivision method:\n"
+              << "                           cc     - Catmull-Clark (default, quad/ngon)\n"
+              << "                           loop   - Loop (triangle mesh)\n"
+              << "                           qt     - quad-tri\n"
+              << "                           linear - linear quad-tri\n"
+              << "  -b, --boundary <mode>  boundary handling:\n"
+              << "                           i - interpolate (default)\n"
+              << "                           p - preserve\n"
               << "\n"
-              << "Subdivision methods:\n"
-              << "  cc:    Catmull-Clark - best for quad meshes, also works with triangles\n"
-              << "  loop:  Loop - best for triangle meshes, creates smooth C2 surface\n"
+              << "Methods:\n"
+              << "  cc:    Catmull-Clark - best for quad meshes\n"
+              << "  loop:  Loop - best for triangle meshes, C2 smooth\n"
               << "  qt:    Quad-tri - mixed quad/triangle meshes\n"
-              << "  linear: Linear - no smoothing, just splits edges\n"
+              << "  linear: Linear - splits edges, no smoothing\n"
               << "\n"
               << "Example:\n"
-              << "  meshsubdivide -i input.off -o output.off -n 2\n"
+              << "  meshsubdivide --input input.off --output output.off --iterations 2\n"
               << "  meshsubdivide -i input.off -o output.off -m loop -n 1\n";
     exit(1);
 }
@@ -48,10 +58,11 @@ int main(int argc, char** argv)
     std::string method = "cc";
     char boundary = 'i';
 
-    int c;
-    while ((c = getopt(argc, argv, "hi:o:n:m:b:")) != -1)
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hi:o:n:m:b:", long_options, &option_index)) != -1)
     {
-        switch (c)
+        switch (opt)
         {
             case 'h':
                 usage_and_exit();

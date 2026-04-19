@@ -10,32 +10,41 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"input", required_argument, 0, 'i'},
+    {"output", required_argument, 0, 'o'},
+    {"method", required_argument, 0, 'm'},
+    {"order", required_argument, 0, 'k'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
-    std::cerr << "Usage: meshfair [options] -i <input> -o <output>\n\n"
-              << "Fair (smooth) a mesh by minimizing curvature or surface area.\n\n"
+    std::cerr << "Usage: meshfair [options] --input <input> --output <output>\n\n"
+              << "Fair (smooth) a mesh by minimizing curvature or area.\n\n"
               << "Options:\n"
-              << "  -h            show this help message\n"
-              << "  -i <file>     input mesh file (required)\n"
-              << "  -o <file>    output mesh file (required)\n"
-              << "  -m <method>  fairing method:\n"
-              << "                 area   - minimize surface area (default)\n"
-              << "                 curv   - minimize surface curvature\n"
-              << "                 fair   - implicit fairing (k-harmonic)\n"
-              << "  -k <order>   order for implicit fairing (2-4, default: 2)\n"
+              << "  -h, --help            show this help message\n"
+              << "  -i, --input <file>    input mesh file (required)\n"
+              << "  -o, --output <file>   output mesh file (required)\n"
+              << "  -m, --method <m>     fairing method:\n"
+              << "                         area - minimize surface area\n"
+              << "                         curv - minimize curvature (default)\n"
+              << "                         fair - implicit fairing (k-harmonic)\n"
+              << "  -k, --order <order>  order for implicit fairing (2-4, default: 2)\n"
               << "\n"
               << "Fairing methods:\n"
-              << "  area:  Minimizes total surface area (first-order gradient flow)\n"
-              << "  curv:  Minimizes curvature (second-order derivative)\n"
-              << "  fair:  Solves k-harmonic equation (most smoothing)\n"
+              << "  area:  Minimizes total surface area\n"
+              << "  curv:  Minimizes surface curvature\n"
+              << "  fair:  Solves k-harmonic equation\n"
               << "\n"
-              << "Implicit fairing (-m fair):\n"
-              << "  -k 2: solves biharmonic equation (default)\n"
-              << "  -k 3: solves triharmonic equation\n"
-              << "  -k 4: solves quadharmonic equation\n"
+              << "Implicit fairing (--method fair):\n"
+              << "  --order 2: biharmonic (default)\n"
+              << "  --order 3: triharmonic\n"
+              << "  --order 4: quadharmonic\n"
               << "\n"
               << "Example:\n"
-              << "  meshfair -i input.off -o output.off -m curv\n"
+              << "  meshfair --input input.off --output output.off --method curv\n"
               << "  meshfair -i input.off -o output.off -m fair -k 3\n";
     exit(1);
 }
@@ -47,10 +56,11 @@ int main(int argc, char** argv)
     std::string method = "curv";
     unsigned int order = 2;
 
-    int c;
-    while ((c = getopt(argc, argv, "hi:o:m:k:")) != -1)
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hi:o:m:k:", long_options, &option_index)) != -1)
     {
-        switch (c)
+        switch (opt)
         {
             case 'h':
                 usage_and_exit();
@@ -94,7 +104,7 @@ int main(int argc, char** argv)
 
     try
     {
-if (method == "area")
+        if (method == "area")
         {
             std::cout << "Minimizing surface area...\n";
             minimize_area(mesh);

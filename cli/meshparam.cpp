@@ -10,38 +10,40 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"input", required_argument, 0, 'i'},
+    {"output", required_argument, 0, 'o'},
+    {"method", required_argument, 0, 'm'},
+    {"uniform", no_argument, 0, 'u'},
+    {"binary", no_argument, 0, 'b'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
-    std::cerr << "Usage: meshparam [options] -i <input> -o <output>\n\n"
-              << "Compute 2D parameterization for UV mapping of a polygonal mesh.\n\n"
+    std::cerr << "Usage: meshparam [options] --input <input> --output <output>\n\n"
+              << "Compute 2D parameterization for UV mapping.\n\n"
               << "Options:\n"
-              << "  -h            show this help message\n"
-              << "  -i <file>     input mesh file (required)\n"
-              << "  -o <file>    output mesh file (required)\n"
-              << "  -m <method>  parameterization method:\n"
-              << "                 harmonic - harmonic parameterization (default)\n"
-              << "                 lscm     - least squares conformal mapping\n"
-              << "  -u            use uniform weights for harmonic (default: cotangent)\n"
-              << "  -b            write output in binary format (default: ASCII)\n"
+              << "  -h, --help            show this help message\n"
+              << "  -i, --input <file>     input mesh file (required)\n"
+              << "  -o, --output <file>   output mesh file (required)\n"
+              << "  -m, --method <m>     parameterization method:\n"
+              << "                       harmonic - harmonic (default)\n"
+              << "                       lscm     - least squares conformal\n"
+              << "  -u, --uniform        use uniform weights (default: cotangent)\n"
+              << "  -b, --binary        write binary format\n"
               << "\n"
               << "Methods:\n"
-              << "  harmonic: Discrete harmonic parameterization (DHP)\n"
-              << "           - Fast, requires bounded mesh\n"
-              << "           - Preserves angles poorly\n"
-              << "  lscm:     Least Squares Conformal Mapping\n"
-              << "           - Conformal (angle-preserving)\n"
-              << "           - Two-free, requires triangle mesh\n"
+              << "  harmonic: Fast, requires bounded mesh, angles not preserved\n"
+              << "  lscm:     Conformal, requires triangle mesh\n"
               << "\n"
               << "Requirements:\n"
-              << "  - Mesh must have a boundary (outer edge loop)\n"
+              << "  - Mesh must have a boundary\n"
               << "  - lscm requires triangle mesh\n"
               << "\n"
-              << "Output:\n"
-              << "  UV coordinates are stored as texture coordinates in output mesh\n"
-              << "  Can be visualized or exported to texture files\n"
-              << "\n"
               << "Example:\n"
-              << "  meshparam -i input.off -o output.off -m harmonic\n"
+              << "  meshparam --input input.off --output output.off --method harmonic\n"
               << "  meshparam -i input.off -o output.off -m lscm\n";
     exit(1);
 }
@@ -54,10 +56,11 @@ int main(int argc, char** argv)
     bool use_uniform = false;
     bool binary = false;
 
-    int c;
-    while ((c = getopt(argc, argv, "hi:o:m:ub")) != -1)
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hi:o:m:ub", long_options, &option_index)) != -1)
     {
-        switch (c)
+        switch (opt)
         {
             case 'h':
                 usage_and_exit();

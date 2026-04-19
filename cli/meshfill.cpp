@@ -11,29 +11,38 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"input", required_argument, 0, 'i'},
+    {"output", required_argument, 0, 'o'},
+    {"all", no_argument, 0, 'a'},
+    {"hole", required_argument, 0, 'n'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
-    std::cerr << "Usage: meshfill [options] -i <input> -o <output>\n\n"
+    std::cerr << "Usage: meshfill [options] --input <input> --output <output>\n\n"
               << "Fill holes in a polygonal mesh using triangulation and fairing.\n\n"
               << "Options:\n"
-              << "  -h            show this help message\n"
-              << "  -i <file>     input mesh file (required)\n"
-              << "  -o <file>    output mesh file (required)\n"
-              << "  -a            fill all holes (default: fill specified hole)\n"
-              << "  -n <num>     hole index to fill, 0-based (default: 0)\n"
+              << "  -h, --help          show this help message\n"
+              << "  -i, --input <file>  input mesh file (required)\n"
+              << "  -o, --output <file> output mesh file (required)\n"
+              << "  -a, --all          fill all holes (default: fill specified hole)\n"
+              << "  -n, --hole <num>    hole index to fill, 0-based (default: 0)\n"
               << "\n"
               << "Algorithm:\n"
-              << "  Fills holes by first triangulating the boundary loop,\n"
-              << "  then performs isometric remeshing, and finally applies\n"
-              << "  curvature-minimizing fairing to the filled patch.\n"
+              << "  Fills holes by triangulating the boundary loop,\n"
+              << "  performs isometric remeshing, and applies\n"
+              << "  curvature-minimizing fairing.\n"
               << "\n"
               << "Notes:\n"
               << "  - Only fills manifold boundary loops\n"
               << "  - Non-manifold boundaries are skipped\n"
-              << "  - Use meshinfo first to see available holes\n"
+              << "  - Use meshinfo first to check holes\n"
               << "\n"
               << "Example:\n"
-              << "  meshfill -i input.off -o output.off -a\n"
+              << "  meshfill --input input.off --output output.off --all\n"
               << "  meshfill -i input.off -o output.off -n 0\n";
     exit(1);
 }
@@ -82,10 +91,11 @@ int main(int argc, char** argv)
     bool fill_all = false;
     int hole_num = -1;
 
-    int c;
-    while ((c = getopt(argc, argv, "hi:o:an:")) != -1)
+    int opt;
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hi:o:an:", long_options, &option_index)) != -1)
     {
-        switch (c)
+        switch (opt)
         {
             case 'h':
                 usage_and_exit();

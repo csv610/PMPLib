@@ -15,25 +15,32 @@
 
 using namespace pmp;
 
+static struct option long_options[] = {
+    {"help", no_argument, 0, 'h'},
+    {"curvature", no_argument, 0, 'c'},
+    {"features", no_argument, 0, 'f'},
+    {0, 0, 0, 0}
+};
+
 void usage_and_exit()
 {
     std::cerr << "Usage: meshinfo [options] <input>\n\n"
               << "Display information about a polygonal mesh.\n\n"
               << "Options:\n"
-              << "  -h         show this help message\n"
-              << "  -c         compute and display curvature information\n"
-              << "  -f         compute and display feature edge information\n"
+              << "  -h, --help          show this help message\n"
+              << "  -c, --curvature    compute and display curvature information\n"
+              << "  -f, --features    compute and display feature edge information\n"
               << "\n"
               << "Mesh information displayed:\n"
               << "  - number of vertices, faces, edges, halfedges\n"
               << "  - bounding box (min/max coordinates)\n"
               << "  - surface area\n"
               << "  - average edge length\n"
-              << "  - (with -c) mean curvature statistics (min/max/avg)\n"
-              << "  - (with -f) number of feature edges at 30 degree angle\n"
+              << "  - (with --curvature) mean curvature statistics (min/max/avg)\n"
+              << "  - (with --features) number of feature edges at 30 degree angle\n"
               << "\n"
               << "Example:\n"
-              << "  meshinfo -c -f input.off\n";
+              << "  meshinfo --curvature --features input.off\n";
     exit(1);
 }
 
@@ -43,7 +50,8 @@ int main(int argc, char** argv)
     bool compute_features = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, "hcf")) != -1)
+    int option_index = 0;
+    while ((opt = getopt_long(argc, argv, "hcf", long_options, &option_index)) != -1)
     {
         switch (opt)
         {
