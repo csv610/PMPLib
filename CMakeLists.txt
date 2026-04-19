@@ -13,6 +13,14 @@ FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
   GIT_TAG v2.9)
+
+if(PMP_BUILD_PYTHON)
+  FetchContent_Declare(
+    nanobind
+    GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+    GIT_TAG v1.9.2)
+endif()
+
 FetchContent_MakeAvailable(argparse)
 
 option(PMP_BUILD_EXAMPLES "Build the PMP examples" ON)
@@ -24,6 +32,7 @@ option(PMP_BUILD_POLYGONAL "Build Polygonal" OFF)
 option(PMP_INSTALL "Install the PMP library and headers" ON)
 option(PMP_STRICT_COMPILATION "Treat compiler warnings as errors" ON)
 option(PMP_BUILD_REGRESSIONS "Build the PMP regression test programs" OFF)
+option(PMP_BUILD_PYTHON "Build Python bindings with nanobind" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 # set output paths
@@ -210,6 +219,10 @@ endif()
 
 if(PMP_BUILD_CLI)
   add_subdirectory(cli)
+endif()
+
+if(PMP_BUILD_PYTHON)
+  add_subdirectory(src/pybind11)
 endif()
 
 if(PMP_BUILD_TESTS)
