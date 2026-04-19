@@ -1,38 +1,115 @@
-# Introduction
+# PMPLib - Polygon Mesh Processing Library
 
-[![build](https://github.com/pmp-library/pmp-library/workflows/build/badge.svg)](https://github.com/pmp-library/pmp-library/actions?query=workflow%3Abuild)
-[![Coverage Status](https://coveralls.io/repos/github/pmp-library/pmp-library/badge.svg?branch=master)](https://coveralls.io/github/pmp-library/pmp-library?branch=main)
-[![Latest Release](https://img.shields.io/github/v/release/pmp-library/pmp-library?sort=semver)](https://github.com/pmp-library/pmp-library/releases/latest)
-[![DOI](https://zenodo.org/badge/105374301.svg)](https://zenodo.org/doi/10.5281/zenodo.10866531)
+[![Build](https://github.com/csv610/PMPLib/actions/workflows/build/badge.svg)](https://github.com/csv610/PMPLib/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The Polygon Mesh Processing Library is a modern C++ open-source library for processing and visualizing polygon surface meshes. Its main features are:
+PMPLib is a modern C++ library for processing polygon surface meshes. This is a fork/port of the original [pmp-library](https://github.com/pmp-library/pmp-library) with additional CLI tools for command-line mesh processing.
 
-- An efficient and easy-to-use mesh data structure
-- Standard algorithms such as decimation, remeshing, subdivision, or smoothing
-- Ready-to-use viewers
-- Seamless cross-compilation to JavaScript ([demo](https://www.pmp-library.org/demos/mpview.html))
+## Features
+
+- **Efficient mesh data structure** - Half-edge data structure for polygon meshes
+- **Comprehensive algorithms** - Decimation, remeshing, subdivision, smoothing, hole filling, fairing, parameterization
+- **CLI tools** - 8 command-line applications for batch processing
+- **Cross-platform** - Windows, macOS, Linux
+- **Header-only optional** - Can be used as header-only library
+
+## CLI Tools (New in this port)
+
+This port adds 8 command-line tools for mesh processing:
+
+| Tool | Description |
+|------|-------------|
+| `meshinfo` | Display mesh statistics (vertices, faces, bbox, area, curvature, features) |
+| `meshfilter` | Laplacian smoothing (explicit/implicit, uniform/cotan weights) |
+| `meshsimplify` | Quadric-based mesh decimation |
+| `meshsubdivide` | Catmull-Clark, Loop, quad-tri subdivision |
+| `meshfill` | Hole filling with triangulation and fairing |
+| `meshfair` | Surface fairing (area/curvature minimization, k-harmonic) |
+| `meshparam` | UV parameterization (harmonic, LSCM) |
+| `meshremesh` | Uniform/adaptive remeshing |
+
+### Building CLI Tools
+
+```sh
+mkdir build && cd build
+cmake .. -DPMP_BUILD_CLI=ON
+make
+```
+
+### Using CLI Tools
+
+```sh
+# Get mesh information
+./meshinfo input.off
+
+# Smooth a mesh
+./meshfilter -i input.off -o output.off -n 20
+
+# Simplify mesh to 1000 vertices
+./meshsimplify -i input.off -o output.off -n 1000
+
+# Subdivide mesh
+./meshsubdivide -i input.off -o output.off -n 2
+
+# Fill holes
+./meshfill -i input.off -o output.off -a
+
+# Fair mesh
+./meshfair -i input.off -o output.off -m curv
+
+# UV mapping
+./meshparam -i input.off -o output.off -m harmonic
+
+# Remesh
+./meshremesh -i input.off -o output.off -m uniform -l 0.01
+```
+
+## Comparison with Other Libraries
+
+| Feature | PMPLib | libigl | CGAL |
+|---------|-------|--------|------|
+| **Language** | C++ | C++ | C++ |
+| **Dependencies** | Eigen only | Eigen | Boost, GMP |
+| **License** | MIT | MPL2 | GPL3/LGPL |
+| **Mesh Data Structure** | Half-edge | Custom | CGAL::Surface_mesh |
+| **CLI Tools** | 8 included | None | Some (via package) |
+| **Header-only** | Optional | Yes | No |
+| **Compilation** | Fast | Fast | Slow |
+| **Template Mesh** | No | Yes | Yes |
+| **GUI Viewer** | GLFW-based | Matplotlib/glfw | Viewer3 |
+
+### When to Use PMPLib
+
+- **Choose PMPLib** when you need: fast compilation, minimal dependencies, CLI tools for batch processing, simple API
+- **Choose libigl** when you need: header-only convenience, template meshes, MATLAB-like syntax, tutorial-style documentation
+- **Choose CGAL** when you need: robust geometry kernels, exact arithmetic, advanced computational geometry
+
+### Algorithm Coverage
+
+| Algorithm | PMPLib | libigl | CGAL |
+|-----------|-------|--------|------|
+| Subdivision | Yes | Yes | Yes |
+| Smoothing | Yes | Yes | Yes |
+| Decimation | Yes | Yes | Yes |
+| Remeshing | Yes | Yes | Partial |
+| Hole Filling | Yes | No | Yes |
+| Parameterization | Yes | Yes | Yes |
+| Fairing | Yes | Yes | Yes |
+| Curvature | Yes | Yes | Yes |
 
 ## Get Started
 
-Clone the repository:
+### Clone and Build
 
 ```sh
-git clone https://github.com/pmp-library/pmp-library.git
+git clone https://github.com/csv610/PMPLib.git
+cd PMPLib
+mkdir build && cd build
+cmake .. -DPMP_BUILD_CLI=ON
+make
 ```
 
-Configure and build:
-
-```sh
-cd pmp-library && mkdir build && cd build && cmake .. && make
-```
-
-Run the mesh processing app:
-
-```sh
-./mpview ../data/off/bunny.off
-```
-
-Build your own tool:
+### Use as Library
 
 ```cpp
 #include <pmp/surface_mesh.h>
@@ -41,38 +118,35 @@ Build your own tool:
 int main()
 {
     pmp::SurfaceMesh mesh;
-    pmp::read(mesh,"input.obj");
-    // .. do awesome things with your mesh
-    pmp::write(mesh,"output.obj");
+    pmp::read(mesh, "input.obj");
+    // process mesh
+    pmp::write(mesh, "output.obj");
 }
 ```
 
-## Read the Docs
+## Documentation
 
-The [user guide](https://www.pmp-library.org/guide.html) contains all you need to get started using PMP, including a [tutorial](https://www.pmp-library.org/tutorial.html) covering mesh processing basics.
+- [PMP Library Guide](https://www.pmp-library.org/guide.html) - Original library documentation
+- [CLI Help](#cli-tools) - Use `-h` flag with each tool
 
-## Contribute
+## License
 
-Contributions to PMP are welcome! There are many ways you can help: Report any [issues](https://github.com/pmp-library/pmp-library/issues) you find, help to improve the documentation, join our [discussions](https://github.com/pmp-library/pmp-library/discussions) forum, or [contribute](https://www.pmp-library.org/contributing.html) new code.
+PMPLib is provided under the [MIT License](LICENSE.txt), same as the original pmp-library.
 
-## Acknowledge
+## Acknowledgments
 
-If you are using PMP for research projects, please acknowledge its use by referencing
+This library is based on the [pmp-library](https://github.com/pmp-library/pmp-library) by Daniel Sieger and Mario Botsch. PMPLib adds CLI tools for command-line usage while maintaining compatibility with the original library.
+
+## Citation
+
+If you use this library, please cite the original pmp-library:
 
 ```tex
 @software{pmp23,
   author = {Sieger, Daniel and Botsch, Mario},
   title = {{The Polygon Mesh Processing Library}},
   year = {2023},
-  month = aug,
   version = {3.0.0},
-  doi = {10.5281/zenodo.10866532},
   url = {https://github.com/pmp-library/pmp-library}
 }
 ```
-
-We acknowledge that PMP evolved from our previous work on [Surface_mesh](http://dx.doi.org/10.1007/978-3-642-24734-7_29) and [OpenMesh](https://pub.uni-bielefeld.de/record/1961694).
-
-## License
-
-PMP is provided under a [MIT license](https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt), allowing for both open-source and commercial usage.
