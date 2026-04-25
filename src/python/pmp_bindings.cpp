@@ -79,7 +79,7 @@ NB_MODULE(pmplib, m)
         .def("positions", [](SurfaceMesh& mesh) {
             auto vpoint = mesh.get_vertex_property<Point>("v:point");
             return nb::ndarray<nb::numpy, Scalar, nb::shape<-1, 3>>(
-                vpoint.data(),
+                (void*)vpoint.data(),
                 {mesh.vertices_size(), 3},
                 nb::handle() 
             );

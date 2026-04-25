@@ -1,5 +1,5 @@
 set(GOOGLE_TEST_ROOT
-    external/googletest-1.13.0/googletest
+    external/googletest-1.17.0/googletest
     CACHE STRING "Google Test root")
 
 include_directories(${PROJECT_SOURCE_DIR}/${GOOGLE_TEST_ROOT}
@@ -10,7 +10,13 @@ set(GOOGLE_TEST_SOURCES
     ${PROJECT_SOURCE_DIR}/${GOOGLE_TEST_ROOT}/src/gtest_main.cc)
 
 add_library(googletest STATIC ${GOOGLE_TEST_SOURCES})
-target_compile_features(googletest PUBLIC cxx_std_14)
+target_compile_features(googletest PUBLIC cxx_std_20)
+
+if(MSVC)
+  target_compile_options(googletest PRIVATE /WX-)
+else()
+  target_compile_options(googletest PRIVATE -Wno-error -Wno-character-conversion)
+endif()
 
 # set output path so that coverage testing works
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -27,6 +33,10 @@ endif()
 
 # build test runner
 add_executable(gtest_runner ${SOURCES})
+
+if(NOT MSVC)
+  target_compile_options(gtest_runner PRIVATE -Wno-error -Wno-character-conversion)
+endif()
 
 if(UNIX OR APPLE)
   target_link_libraries(gtest_runner pmp googletest pthread)

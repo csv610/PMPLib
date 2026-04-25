@@ -12,13 +12,13 @@ include(FetchContent)
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-  GIT_TAG v2.9)
+  GIT_TAG v3.2)
 
 if(PMP_BUILD_PYTHON)
   FetchContent_Declare(
     nanobind
     GIT_REPOSITORY https://github.com/wjakob/nanobind.git
-    GIT_TAG v1.9.2)
+    GIT_TAG v2.12.0)
 endif()
 
 FetchContent_MakeAvailable(argparse)
@@ -45,8 +45,8 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 if(PMP_BUILD_VIEWERS)
   set(GLFW_SOURCE_DIR_INTERNAL "external/glfw-3.4")
   set(GLAD_SOURCE_DIR "external/glad-2.0.8")
-  set(IMGUI_SOURCE_DIR "external/imgui-1.92.6")
-  set(STB_IMAGE_SOURCE_DIR "external/stb_image-2.28")
+  set(IMGUI_SOURCE_DIR "external/imgui-1.92.7")
+  set(STB_IMAGE_SOURCE_DIR "external/stb_image-2.30")
   set(STB_IMAGE_WRITE_SOURCE_DIR "external/stb_image_write-1.16")
 
   add_subdirectory(${STB_IMAGE_WRITE_SOURCE_DIR})
@@ -86,9 +86,9 @@ if(PMP_BUILD_VIEWERS)
 endif(PMP_BUILD_VIEWERS)
 
 if(NOT DEFINED EIGEN3_INCLUDE_DIR)
-  set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/eigen-3.4.0")
+  set(EIGEN3_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/eigen-5.0.0")
 endif()
-find_package(Eigen3 3.4.0 REQUIRED)
+find_package(Eigen3 5.0.0 REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/src/)
 
