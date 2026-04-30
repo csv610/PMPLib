@@ -13,7 +13,7 @@ using namespace pmp;
 
 int main(int argc, char** argv)
 {
-    argparse::ArgumentParser program("meshparam", "1.0", argparse::default_arguments::help);
+    argparse::ArgumentParser program("meshparam", "1.0");
 
     std::string input_file;
     std::string output_file;
@@ -43,6 +43,11 @@ int main(int argc, char** argv)
         .default_value(false)
         .implicit_value(true);
 
+    program.add_argument("-h", "--help")
+        .help("shows help message and exits")
+        .default_value(false)
+        .implicit_value(true);
+
     try
     {
         program.parse_args(argc, argv);
@@ -54,11 +59,25 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    input_file = program.get<std::string>("--input");
-    output_file = program.get<std::string>("--output");
-    method = program.get<std::string>("--method");
-    use_uniform = program.get<bool>("--uniform");
-    binary = program.get<bool>("--binary");
+    if (program.get<bool>("--help"))
+    {
+        std::cout << program;
+        return 0;
+    }
+
+    try
+    {
+        input_file = program.get<std::string>("--input");
+        output_file = program.get<std::string>("--output");
+        method = program.get<std::string>("--method");
+        use_uniform = program.get<bool>("--uniform");
+        binary = program.get<bool>("--binary");
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Error getting arguments: " << err.what() << std::endl;
+        return 1;
+    }
 
     SurfaceMesh mesh;
     try

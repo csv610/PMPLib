@@ -8,12 +8,21 @@
 #include <argparse/argparse.hpp>
 
 #include <iostream>
+#include <sstream>
 
 using namespace pmp;
 
+unsigned int parse_uint(const std::string& s)
+{
+    unsigned int value = 0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
 int main(int argc, char** argv)
 {
-    argparse::ArgumentParser program("meshfair", "1.0", argparse::default_arguments::help);
+    argparse::ArgumentParser program("meshfair", "1.0");
 
     std::string input_file;
     std::string output_file;
@@ -34,8 +43,12 @@ int main(int argc, char** argv)
 
     program.add_argument("-k", "--order")
         .help("Order for implicit fairing (2-4)")
-        .default_value(2)
-        .scan<'i', unsigned int>();
+        .default_value("2");
+
+    program.add_argument("-h", "--help")
+        .help("shows help message and exits")
+        .default_value(false)
+        .implicit_value(true);
 
     try
     {
@@ -48,10 +61,24 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    input_file = program.get<std::string>("--input");
-    output_file = program.get<std::string>("--output");
-    method = program.get<std::string>("--method");
-    order = program.get<unsigned int>("--order");
+    if (program.get<bool>("--help"))
+    {
+        std::cout << program;
+        return 0;
+    }
+
+    try
+    {
+        input_file = program.get<std::string>("--input");
+        output_file = program.get<std::string>("--output");
+        method = program.get<std::string>("--method");
+        order = parse_uint(program.get<std::string>("--order"));
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Error getting arguments: " << err.what() << std::endl;
+        return 1;
+    }
 
     SurfaceMesh mesh;
     try

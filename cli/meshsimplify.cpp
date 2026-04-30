@@ -8,21 +8,38 @@
 #include <argparse/argparse.hpp>
 
 #include <iostream>
+#include <sstream>
 
 using namespace pmp;
 
+double parse_double(const std::string& s)
+{
+    double value = 0.0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
+unsigned int parse_uint(const std::string& s)
+{
+    unsigned int value = 0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
 int main(int argc, char** argv)
 {
-    argparse::ArgumentParser program("meshsimplify", "1.0", argparse::default_arguments::help);
+    argparse::ArgumentParser program("meshsimplify", "1.0");
 
     std::string input_file;
     std::string output_file;
     unsigned int n_vertices = 0;
-    Scalar aspect_ratio = 0.0;
-    Scalar edge_length = 0.0;
+    double aspect_ratio = 0.0;
+    double edge_length = 0.0;
     unsigned int max_valence = 0;
-    Scalar normal_deviation = 0.0;
-    Scalar hausdorff_error = 0.0;
+    double normal_deviation = 0.0;
+    double hausdorff_error = 0.0;
 
     program.add_argument("-i", "--input")
         .help("Input mesh file")
@@ -34,33 +51,32 @@ int main(int argc, char** argv)
 
     program.add_argument("-n", "--vertices")
         .help("Target number of vertices")
-        .required()
-        .scan<'i', unsigned int>();
+        .required();
 
     program.add_argument("-a", "--aspect-ratio")
         .help("Minimum aspect ratio [0-1]")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-e", "--edge-length")
         .help("Minimum edge length")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-m", "--max-valence")
         .help("Maximum vertex valence")
-        .default_value(0)
-        .scan<'i', unsigned int>();
+        .default_value("0");
 
     program.add_argument("-d", "--normal-deviation")
         .help("Maximum normal deviation (degrees)")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-H", "--hausdorff")
         .help("Maximum Hausdorff error")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
+
+    program.add_argument("-h", "--help")
+        .help("shows help message and exits")
+        .default_value(false)
+        .implicit_value(true);
 
     try
     {
@@ -73,14 +89,28 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    input_file = program.get<std::string>("--input");
-    output_file = program.get<std::string>("--output");
-    n_vertices = program.get<unsigned int>("--vertices");
-    aspect_ratio = program.get<Scalar>("--aspect-ratio");
-    edge_length = program.get<Scalar>("--edge-length");
-    max_valence = program.get<unsigned int>("--max-valence");
-    normal_deviation = program.get<Scalar>("--normal-deviation");
-    hausdorff_error = program.get<Scalar>("--hausdorff");
+    if (program.get<bool>("--help"))
+    {
+        std::cout << program;
+        return 0;
+    }
+
+    try
+    {
+        input_file = program.get<std::string>("--input");
+        output_file = program.get<std::string>("--output");
+        n_vertices = parse_uint(program.get<std::string>("--vertices"));
+        aspect_ratio = parse_double(program.get<std::string>("--aspect-ratio"));
+        edge_length = parse_double(program.get<std::string>("--edge-length"));
+        max_valence = parse_uint(program.get<std::string>("--max-valence"));
+        normal_deviation = parse_double(program.get<std::string>("--normal-deviation"));
+        hausdorff_error = parse_double(program.get<std::string>("--hausdorff"));
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Error getting arguments: " << err.what() << std::endl;
+        return 1;
+    }
 
     SurfaceMesh mesh;
     try

@@ -8,12 +8,21 @@
 #include <argparse/argparse.hpp>
 
 #include <iostream>
+#include <sstream>
 
 using namespace pmp;
 
+unsigned int parse_uint(const std::string& s)
+{
+    unsigned int value = 0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
 int main(int argc, char** argv)
 {
-    argparse::ArgumentParser program("meshsubdivide", "1.0", argparse::default_arguments::help);
+    argparse::ArgumentParser program("meshsubdivide", "1.0");
 
     std::string input_file;
     std::string output_file;
@@ -31,8 +40,7 @@ int main(int argc, char** argv)
 
     program.add_argument("-n", "--iterations")
         .help("Number of iterations")
-        .default_value(1)
-        .scan<'i', unsigned int>();
+        .default_value("1");
 
     program.add_argument("-m", "--method")
         .help("Subdivision method: cc, loop, qt, linear")
@@ -41,6 +49,11 @@ int main(int argc, char** argv)
     program.add_argument("-b", "--boundary")
         .help("Boundary handling: i (interpolate), p (preserve)")
         .default_value("i");
+
+    program.add_argument("-h", "--help")
+        .help("shows help message and exits")
+        .default_value(false)
+        .implicit_value(true);
 
     try
     {
@@ -53,11 +66,27 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    input_file = program.get<std::string>("--input");
-    output_file = program.get<std::string>("--output");
-    iterations = program.get<unsigned int>("--iterations");
-    method = program.get<std::string>("--method");
-    boundary = program.get<char>("--boundary");
+    if (program.get<bool>("--help"))
+    {
+        std::cout << program;
+        return 0;
+    }
+
+    try
+    {
+        input_file = program.get<std::string>("--input");
+        output_file = program.get<std::string>("--output");
+        iterations = parse_uint(program.get<std::string>("--iterations"));
+        method = program.get<std::string>("--method");
+        std::string boundary_str = program.get<std::string>("--boundary");
+        if (!boundary_str.empty())
+            boundary = boundary_str[0];
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Error getting arguments: " << err.what() << std::endl;
+        return 1;
+    }
 
     SurfaceMesh mesh;
     try

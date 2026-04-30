@@ -8,20 +8,37 @@
 #include <argparse/argparse.hpp>
 
 #include <iostream>
+#include <sstream>
 
 using namespace pmp;
 
+double parse_double(const std::string& s)
+{
+    double value = 0.0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
+unsigned int parse_uint(const std::string& s)
+{
+    unsigned int value = 0;
+    std::istringstream iss(s);
+    iss >> value;
+    return value;
+}
+
 int main(int argc, char** argv)
 {
-    argparse::ArgumentParser program("meshremesh", "1.0", argparse::default_arguments::help);
+    argparse::ArgumentParser program("meshremesh", "1.0");
 
     std::string input_file;
     std::string output_file;
     std::string mode = "adaptive";
-    Scalar edge_length = 0.0;
-    Scalar min_edge_length = 0.0;
-    Scalar max_edge_length = 0.0;
-    Scalar approx_error = 0.0;
+    double edge_length = 0.0;
+    double min_edge_length = 0.0;
+    double max_edge_length = 0.0;
+    double approx_error = 0.0;
     unsigned int iterations = 10;
     bool use_projection = true;
     bool binary = false;
@@ -40,28 +57,23 @@ int main(int argc, char** argv)
 
     program.add_argument("-l", "--length")
         .help("Target edge length for uniform")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-n", "--min-length")
         .help("Min edge length for adaptive")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-x", "--max-length")
         .help("Max edge length for adaptive")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-e", "--error")
         .help("Approximation error for adaptive")
-        .default_value(0.0)
-        .scan<'g', Scalar>();
+        .default_value("0.0");
 
     program.add_argument("-r", "--iterations")
         .help("Number of iterations")
-        .default_value(10)
-        .scan<'i', unsigned int>();
+        .default_value("10");
 
     program.add_argument("-p", "--no-projection")
         .help("Disable projection to original")
@@ -70,6 +82,11 @@ int main(int argc, char** argv)
 
     program.add_argument("-b", "--binary")
         .help("Write binary format")
+        .default_value(false)
+        .implicit_value(true);
+
+    program.add_argument("-h", "--help")
+        .help("shows help message and exits")
         .default_value(false)
         .implicit_value(true);
 
@@ -84,16 +101,30 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    input_file = program.get<std::string>("--input");
-    output_file = program.get<std::string>("--output");
-    mode = program.get<std::string>("--mode");
-    edge_length = program.get<Scalar>("--length");
-    min_edge_length = program.get<Scalar>("--min-length");
-    max_edge_length = program.get<Scalar>("--max-length");
-    approx_error = program.get<Scalar>("--error");
-    iterations = program.get<unsigned int>("--iterations");
-    use_projection = !program.get<bool>("--no-projection");
-    binary = program.get<bool>("--binary");
+    if (program.get<bool>("--help"))
+    {
+        std::cout << program;
+        return 0;
+    }
+
+    try
+    {
+        input_file = program.get<std::string>("--input");
+        output_file = program.get<std::string>("--output");
+        mode = program.get<std::string>("--mode");
+        edge_length = parse_double(program.get<std::string>("--length"));
+        min_edge_length = parse_double(program.get<std::string>("--min-length"));
+        max_edge_length = parse_double(program.get<std::string>("--max-length"));
+        approx_error = parse_double(program.get<std::string>("--error"));
+        iterations = parse_uint(program.get<std::string>("--iterations"));
+        use_projection = !program.get<bool>("--no-projection");
+        binary = program.get<bool>("--binary");
+    }
+    catch (const std::exception& err)
+    {
+        std::cerr << "Error getting arguments: " << err.what() << std::endl;
+        return 1;
+    }
 
     if (mode == "uniform" && edge_length <= 0.0)
     {
