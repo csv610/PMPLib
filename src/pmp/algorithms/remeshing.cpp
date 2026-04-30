@@ -276,13 +276,13 @@ private:
 
     bool is_too_long(Vertex v0, Vertex v1) const
     {
-        return distance(points_[v0], points_[v1]) >
-               4.0 / 3.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        const Scalar s = 4.0 / 3.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        return sqrnorm(points_[v0] - points_[v1]) > s * s;
     }
     bool is_too_short(Vertex v0, Vertex v1) const
     {
-        return distance(points_[v0], points_[v1]) <
-               4.0 / 5.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        const Scalar s = 4.0 / 5.0 * std::min(vsizing_[v0], vsizing_[v1]);
+        return sqrnorm(points_[v0] - points_[v1]) < s * s;
     }
 
     SurfaceMesh& mesh_;
@@ -567,7 +567,7 @@ void Remeshing::preprocessing()
         }
 
         // build kd-tree
-        kd_tree_ = std::make_unique<TriangleKdTree>(refmesh_, 0);
+        kd_tree_ = std::make_unique<TriangleKdTree>(refmesh_, 10);
     }
 }
 
@@ -939,6 +939,9 @@ void Remeshing::tangential_smoothing(unsigned int iterations)
         }
     }
 
+    // update normal vectors
+    vertex_normals(mesh_);
+
     for (unsigned int iters = 0; iters < iterations; ++iters)
     {
         for (auto v : mesh_.vertices())
@@ -1018,10 +1021,10 @@ void Remeshing::tangential_smoothing(unsigned int iterations)
                 points_[v] += update[v];
             }
         }
-
-        // update normal vectors (if not done so through projection)
-        vertex_normals(mesh_);
     }
+
+    // update normal vectors (if not done so through projection)
+    vertex_normals(mesh_);
 
     // project at the end
     if (use_projection_)

@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 
 using namespace pmp;
 
@@ -151,6 +152,26 @@ int main(int argc, char** argv)
 
     std::cout << "Input: " << input_file << "\n";
     std::cout << "Vertices: " << mesh.n_vertices() << "\n";
+
+    if (mesh.n_vertices() > 0)
+    {
+        Scalar avg_edge_length = 0.0;
+        int edge_count = 0;
+        for (auto e : mesh.edges())
+        {
+            auto p0 = mesh.position(mesh.vertex(e, 0));
+            auto p1 = mesh.position(mesh.vertex(e, 1));
+            avg_edge_length += distance(p0, p1);
+            edge_count++;
+        }
+        if (edge_count > 0)
+        {
+            avg_edge_length /= edge_count;
+            std::cout << "Avg edge length: " << std::fixed << std::setprecision(4)
+                      << avg_edge_length << "\n";
+        }
+    }
+
     std::cout << "Mode: " << mode << ", iterations: " << iterations << "\n";
 
     try
@@ -158,13 +179,18 @@ int main(int argc, char** argv)
         if (mode == "uniform")
         {
             std::cout << "Edge length: " << edge_length << "\n";
+            std::cout << "Remeshing..." << std::flush;
             uniform_remeshing(mesh, edge_length, iterations, use_projection);
+            std::cout << " done." << std::endl;
         }
         else if (mode == "adaptive")
         {
             std::cout << "Min edge: " << min_edge_length << ", Max edge: " << max_edge_length
                       << ", Approx error: " << approx_error << "\n";
-            adaptive_remeshing(mesh, min_edge_length, max_edge_length, approx_error, iterations, use_projection);
+            std::cout << "Remeshing..." << std::flush;
+            adaptive_remeshing(mesh, min_edge_length, max_edge_length,
+                               approx_error, iterations, use_projection);
+            std::cout << " done." << std::endl;
         }
         else
         {
