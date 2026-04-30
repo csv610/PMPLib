@@ -96,6 +96,12 @@ void Viewer::process_imgui()
 int main(int argc, char** argv)
 {
 #ifndef __EMSCRIPTEN__
+    if (argc == 2 && std::string(argv[1]) == "-h")
+    {
+        std::cerr << "Usage: " << argv[0] << " [input]\n";
+        std::cerr << "  Interactive viewer for mesh decimation.\n";
+        exit(0);
+    }
     Viewer window("Decimation", 800, 600);
     if (argc == 2)
         window.load_mesh(argv[1]);

@@ -82,6 +82,12 @@ void Viewer::process_imgui()
 int main(int argc, char** argv)
 {
 #ifndef __EMSCRIPTEN__
+    if (argc == 2 && std::string(argv[1]) == "-h")
+    {
+        std::cerr << "Usage: " << argv[0] << " [input]\n";
+        std::cerr << "  Interactive viewer for mesh curvature visualization.\n";
+        exit(0);
+    }
     Viewer window("Curvature", 800, 600, true);
     if (argc == 2)
         window.load_mesh(argv[1]);

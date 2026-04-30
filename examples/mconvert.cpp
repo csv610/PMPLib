@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 
     // parse command line parameters
     int c;
-    while ((c = getopt(argc, argv, "bi:o:")) != -1)
+    while ((c = getopt(argc, argv, "bhi:o:")) != -1)
     {
         switch (c)
         {
@@ -38,6 +38,10 @@ int main(int argc, char** argv)
 
             case 'o':
                 output = optarg;
+                break;
+
+            case 'h':
+                usage_and_exit();
                 break;
 
             default:

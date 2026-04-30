@@ -9,7 +9,14 @@ using namespace pmp;
 // clang-format off
 int main(int argc, char** argv)
 {
-SurfaceMesh mesh;
+    if (argc > 1 && std::string(argv[1]) == "-h")
+    {
+        std::cerr << "Usage: " << argv[0] << " [input]\n";
+        std::cerr << "  Compute and print the barycenter of a mesh.\n";
+        exit(0);
+    }
+
+    SurfaceMesh mesh;
 
 if (argc > 1)
     read(mesh, argv[1]);

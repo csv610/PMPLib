@@ -9,7 +9,14 @@ using namespace pmp;
 // clang-format off
 int main(int argc, char** argv)
 {
-SurfaceMesh mesh;
+    if (argc > 1 && std::string(argv[1]) == "-h")
+    {
+        std::cerr << "Usage: " << argv[0] << " [input]\n";
+        std::cerr << "  Example demonstrating edge property handling.\n";
+        exit(0);
+    }
+
+    SurfaceMesh mesh;
 
 if (argc > 1)
     read(mesh, argv[1]);
