@@ -151,6 +151,23 @@ make
 
 ### Use as Library
 
+## External Dependencies
+
+PMPLib uses the following external libraries:
+
+| Library | Version | Purpose |
+|---------|---------|---------|
+| Eigen | 5.0.0 | Linear algebra |
+| GLAD | 2.0.8 | OpenGL loader |
+| GLFW | 3.4 | Window/input handling |
+| Google Test | 1.17.0 | Unit testing |
+| ImGui | 1.92.7 | GUI rendering |
+| stb_image | 2.30 | Image loading |
+| stb_image_write | 1.16 | Image saving |
+| argparse | 3.2.0 | CLI argument parsing |
+
+All external dependencies are automatically downloaded and managed by CMake during the build process.
+
 ```cpp
 #include <pmp/surface_mesh.h>
 #include <pmp/io/io.h>
